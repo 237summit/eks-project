@@ -1,4 +1,4 @@
-pipeline {
+pipeline {admin
     agent any
     
     environment {
@@ -38,7 +38,7 @@ pipeline {
         stage('clone project') {
             steps {
                 script {
-                    deployGit = git(url: 'https://github.com/237summit/eks-project.git', branch: 'main', credentialsId: 'git_awesome')
+                    deployGit = git(url: 'https://github.com/237summit/eks-project.git', branch: 'main', credentialsId: 'github-237summit')
                  }
                 sh "tar cvf vue.tar vue/"
             }
