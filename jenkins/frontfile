@@ -5,9 +5,9 @@ pipeline {
         ECR_PATH = '158208647875.dkr.ecr.ap-northeast-2.amazonaws.com/awesome-front'
         IMAGE_NAME = 'awesome-front'
         REGION = 'ap-northeast-2'
-        AWS_CREDENTIAL_NAME = 'aws_awesome'
-        GIT_TK = 'git_awesome'
-        GIT_USERNAME = 'awesome'
+        AWS_CREDENTIAL_NAME = 'admin-credential'
+        GIT_TK = 'github-237summit'
+        GIT_USERNAME = '237summit'
 
     }   
 
