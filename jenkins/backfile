@@ -1,0 +1,169 @@
+pipeline {
+    agent any
+    
+    environment {
+        ECR_PATH = '1234567.dkr.ecr.ap-northeast-2.amazonaws.com'
+        IMAGE_NAME = 'awesome-back'
+        REGION = 'ap-northeast-2'
+        AWS_CREDENTIAL_NAME = 'aws_awesome'
+        GIT_TK = 'git_awesome'
+        GIT_USERNAME = 'awesome'
+
+    }   
+
+    stages {
+        stage('init') {
+            steps {
+                echo 'init stage'
+                deleteDir()
+            }
+            post {
+                success {
+                    slackSend (
+                        channel: '# finalproject',
+                        color: '#01786f',
+                        message: 'back!! init success!!'
+                    )
+                }
+                failure {
+                   slackSend (
+                        channel: '# finalproject',
+                        color: '#ce6054',
+                        message: 'back!! init failure!!'
+                     )
+                }
+            }
+        }
+
+        stage('clone project') {
+            steps {
+                script {
+                    deployGit = git(url: 'https://github.com/awesome/AWeSomeFinal.git', branch: 'main', credentialsId: 'git_awesome')
+                 }
+                sh "ls -al"
+            }
+            post {
+                success {
+                    slackSend (
+                        channel: '# finalproject',
+                        color: '#01786f',
+                        message: 'back!! clone project success!!'
+                    )
+                }
+                failure {
+                   slackSend (
+                        channel: '# finalproject',
+                        color: '#ce6054',
+                        message: 'back!! clone project failure!!'
+                     )
+                }
+            }
+        }
+
+        stage('maven build') {
+            steps {
+               dir(path: 'spring-boot') {
+                    sh 'chmod 755 mvnw'
+                    sh './mvnw clean package'
+                }   
+            }
+            post {
+                success {
+                    slackSend (
+                        channel: '# finalproject',
+                        color: '#01786f',
+                        message: 'back!! maven build success!!'
+                    )
+                }
+                failure {
+                   slackSend (
+                        channel: '# finalproject',
+                        color: '#ce6054',
+                        message: 'back!! maven build failure!!'
+                     )
+                }
+            }
+        }
+
+        stage("Docker build") {
+            steps {
+                sh 'docker build -t ${ECR_PATH}/${IMAGE_NAME}:${BUILD_NUMBER} -f dockerfile/backfile .'
+            }
+            post {
+                success {
+                    slackSend (
+                        channel: '# finalproject',
+                        color: '#01786f',
+                        message: 'back!! Docker build success!!'
+                    )
+                }
+                failure {
+                   slackSend (
+                        channel: '# finalproject',
+                        color: '#ce6054',
+                        message: 'back!! Docker build failure!!'
+                     )
+                }
+            } 
+        }
+
+        stage('Push image') {
+            steps {
+                script{
+                    docker.withRegistry('https://1234567.dkr.ecr.ap-northeast-2.amazonaws.com', 'ecr:ap-northeast-2:aws_awesome') {
+                    
+                    docker.image("${ECR_PATH}/${IMAGE_NAME}:${BUILD_NUMBER}").push()
+                    }
+                }   
+            }
+            post {
+                success {
+                    slackSend (
+                        channel: '# finalproject',
+                        color: '#01786f',
+                        message: 'back!! Push image success!!'
+                    )
+                }
+                failure {
+                   slackSend (
+                        channel: '# finalproject',
+                        color: '#ce6054',
+                        message: 'back!! Push image failure!!'
+                     )
+                }
+            }
+        }
+
+        stage("Deploy") {
+            steps {
+                dir("k8s") {
+                    withCredentials([usernamePassword(credentialsId: 'git_awesome', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]){
+                        sh('git pull https://${USERNAME}:${PASSWORD}@github.com/awesome/AWeSomeFinal')
+                        sh "sed -i 's/awesome-back:.*/awesome-back:${BUILD_NUMBER}/g' service/back.yaml"
+                        sh "git add ."
+                        sh "git config --global user.email 'awesome@gmail.com'"
+                        sh "git config --global user.name 'awesome'"
+                        sh "git commit -m '[Argo] Docker image tag: back-${BUILD_NUMBER}'"
+                        sh('git push https://${USERNAME}:${PASSWORD}@github.com/awesome/AWeSomeFinal')
+                    }   
+                }
+            }
+            post {
+                success {
+                    slackSend (
+                        channel: '# finalproject',
+                        color: '#01786f',
+                        message: 'k8s Deploy success'
+                    )
+                }
+                failure {
+                   slackSend (
+                        channel: '# finalproject',
+                        color: '#ce6054',
+                        message: 'k8s Deploy failure'
+                     )
+                }
+            }
+        }   
+    }
+}

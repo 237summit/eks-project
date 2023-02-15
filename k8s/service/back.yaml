@@ -1,0 +1,81 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: back-rollout
+  namespace: awesome
+  labels:
+    app: back
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: back
+  template:
+    metadata:
+      labels:
+        app: back
+    spec:
+      containers:
+      - name: back-container
+        image: 1234567.dkr.ecr.ap-northeast-2.amazonaws.com/awesome-back:33
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 10001
+        resources:
+          requests:
+            cpu: 200m
+  strategy:
+    blueGreen: 
+      #activeService는 이전의 배포된 Blue 서비스
+      activeService: backsvc-blue
+      #previewService는 새롭게 배포될 Green 서비스
+      previewService: backsvc-green
+      #autoPromotioEnabled 옵션은 Blue/Green 배포를 자동으로 진행할 것인지 여부. false 옵션을 사용해 수동으로 지정
+      autoPromotionEnabled: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backsvc-blue
+  namespace: awesome
+  labels:
+    app: back
+spec:
+  selector:
+    app: back
+  type: NodePort
+  ports:
+  - nodePort: 30022
+    port: 10001
+    targetPort: 10001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backsvc-green
+  namespace: awesome
+  labels:
+    app: back
+spec:
+  selector:
+    app: back
+  type: NodePort
+  ports:
+  - nodePort: 30222
+    port: 10001
+    targetPort: 10001
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: back-hpa
+  namespace: awesome
+spec:
+  maxReplicas: 6
+  minReplicas: 2
+  scaleTargetRef:
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    name: back-rollout
+  targetCPUUtilizationPercentage: 50
