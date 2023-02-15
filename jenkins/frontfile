@@ -1,4 +1,4 @@
-pipeline {admin
+pipeline {
     agent any
     
     environment {
