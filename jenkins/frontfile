@@ -113,12 +113,12 @@ pipeline {admin
         stage("k8s Deploy") {
             steps {
                 dir("k8s") {
-                    withCredentials([usernamePassword(credentialsId: 'git_awesome', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]){
+                    withCredentials([usernamePassword(credentialsId: 'github-237summit', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]){
 	                    sh "sed -i 's/awesome-front:.*/awesome-front:${BUILD_NUMBER}/g' service/front.yaml"
                         sh('git pull https://${USERNAME}:${PASSWORD}@github.com/237summit/eks-project')
                         sh "git add ."
-                        sh "git config --global user.email 'awesome@gmail.com'"
-                        sh "git config --global user.name 'awesome'"
+                        sh "git config --global user.email 'admin@aa.com'"
+                        sh "git config --global user.name 'admin'"
                         sh "git commit -m '[Argo] Docker image tag: front-${BUILD_NUMBER}'"
                         sh('git push https://${USERNAME}:${PASSWORD}@github.com/237summit/eks-project')
                     }   
