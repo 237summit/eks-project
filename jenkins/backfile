@@ -2,14 +2,15 @@ pipeline {
     agent any
     
     environment {
-        ECR_PATH = '1234567.dkr.ecr.ap-northeast-2.amazonaws.com'
+        ECR_PATH = '158208647875.dkr.ecr.ap-northeast-2.amazonaws.com' //
         IMAGE_NAME = 'awesome-back'
         REGION = 'ap-northeast-2'
-        AWS_CREDENTIAL_NAME = 'aws_awesome'
-        GIT_TK = 'git_awesome'
-        GIT_USERNAME = 'awesome'
+        AWS_CREDENTIAL_NAME = 'aws-admin'
+        GIT_TK = 'git-admin'
+        GIT_USERNAME = '237summit'
 
     }   
+
 
     stages {
         stage('init') {
@@ -17,6 +18,7 @@ pipeline {
                 echo 'init stage'
                 deleteDir()
             }
+/*
             post {
                 success {
                     slackSend (
@@ -33,31 +35,33 @@ pipeline {
                      )
                 }
             }
+  */
         }
 
         stage('clone project') {
             steps {
                 script {
-                    deployGit = git(url: 'https://github.com/awesome/AWeSomeFinal.git', branch: 'main', credentialsId: 'git_awesome')
+                    deployGit = git(url: 'https://github.com/237summit/eks-project.git', branch: 'main', credentialsId: 'git-admin')
                  }
                 sh "ls -al"
             }
-            post {
-                success {
-                    slackSend (
-                        channel: '# finalproject',
-                        color: '#01786f',
-                        message: 'back!! clone project success!!'
-                    )
-                }
-                failure {
-                   slackSend (
-                        channel: '# finalproject',
-                        color: '#ce6054',
-                        message: 'back!! clone project failure!!'
-                     )
-                }
-            }
+            
+            // post {
+            //     success {
+            //         slackSend (
+            //             channel: '# finalproject',
+            //             color: '#01786f',
+            //             message: 'back!! clone project success!!'
+            //         )
+            //     }
+            //     failure {
+            //        slackSend (
+            //             channel: '# finalproject',
+            //             color: '#ce6054',
+            //             message: 'back!! clone project failure!!'
+            //          )
+            //     }
+            // }
         }
 
         stage('maven build') {
@@ -67,103 +71,103 @@ pipeline {
                     sh './mvnw clean package'
                 }   
             }
-            post {
-                success {
-                    slackSend (
-                        channel: '# finalproject',
-                        color: '#01786f',
-                        message: 'back!! maven build success!!'
-                    )
-                }
-                failure {
-                   slackSend (
-                        channel: '# finalproject',
-                        color: '#ce6054',
-                        message: 'back!! maven build failure!!'
-                     )
-                }
-            }
+            // post {
+            //     success {
+            //         slackSend (
+            //             channel: '# finalproject',
+            //             color: '#01786f',
+            //             message: 'back!! maven build success!!'
+            //         )
+            //     }
+            //     failure {
+            //        slackSend (
+            //             channel: '# finalproject',
+            //             color: '#ce6054',
+            //             message: 'back!! maven build failure!!'
+            //          )
+            //     }
+            // }
         }
 
         stage("Docker build") {
             steps {
                 sh 'docker build -t ${ECR_PATH}/${IMAGE_NAME}:${BUILD_NUMBER} -f dockerfile/backfile .'
             }
-            post {
-                success {
-                    slackSend (
-                        channel: '# finalproject',
-                        color: '#01786f',
-                        message: 'back!! Docker build success!!'
-                    )
-                }
-                failure {
-                   slackSend (
-                        channel: '# finalproject',
-                        color: '#ce6054',
-                        message: 'back!! Docker build failure!!'
-                     )
-                }
-            } 
+            // post {
+            //     success {
+            //         slackSend (
+            //             channel: '# finalproject',
+            //             color: '#01786f',
+            //             message: 'back!! Docker build success!!'
+            //         )
+            //     }
+            //     failure {
+            //        slackSend (
+            //             channel: '# finalproject',
+            //             color: '#ce6054',
+            //             message: 'back!! Docker build failure!!'
+            //          )
+            //     }
+            // } 
         }
 
         stage('Push image') {
             steps {
                 script{
-                    docker.withRegistry('https://1234567.dkr.ecr.ap-northeast-2.amazonaws.com', 'ecr:ap-northeast-2:aws_awesome') {
+                    docker.withRegistry('https://158208647875.dkr.ecr.ap-northeast-2.amazonaws.com', 'ecr:ap-northeast-2:aws-admin') {
                     
                     docker.image("${ECR_PATH}/${IMAGE_NAME}:${BUILD_NUMBER}").push()
                     }
                 }   
             }
-            post {
-                success {
-                    slackSend (
-                        channel: '# finalproject',
-                        color: '#01786f',
-                        message: 'back!! Push image success!!'
-                    )
-                }
-                failure {
-                   slackSend (
-                        channel: '# finalproject',
-                        color: '#ce6054',
-                        message: 'back!! Push image failure!!'
-                     )
-                }
-            }
+            // post {
+            //     success {
+            //         slackSend (
+            //             channel: '# finalproject',
+            //             color: '#01786f',
+            //             message: 'back!! Push image success!!'
+            //         )
+            //     }
+            //     failure {
+            //        slackSend (
+            //             channel: '# finalproject',
+            //             color: '#ce6054',
+            //             message: 'back!! Push image failure!!'
+            //          )
+            //     }
+            // }
         }
 
         stage("Deploy") {
             steps {
                 dir("k8s") {
-                    withCredentials([usernamePassword(credentialsId: 'git_awesome', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]){
-                        sh('git pull https://${USERNAME}:${PASSWORD}@github.com/awesome/AWeSomeFinal')
+                    withCredentials([usernamePassword(credentialsId: 'git-admin', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]){
+                        sh('git pull https://${USERNAME}:${PASSWORD}@github.com/237summit/eks-project')
                         sh "sed -i 's/awesome-back:.*/awesome-back:${BUILD_NUMBER}/g' service/back.yaml"
                         sh "git add ."
-                        sh "git config --global user.email 'awesome@gmail.com'"
-                        sh "git config --global user.name 'awesome'"
+                        sh "git config --global user.email 'seongmi.lee@gmail.com'"
+                        sh "git config --global user.name '237summit'"
                         sh "git commit -m '[Argo] Docker image tag: back-${BUILD_NUMBER}'"
-                        sh('git push https://${USERNAME}:${PASSWORD}@github.com/awesome/AWeSomeFinal')
+                        sh('git push https://${USERNAME}:${PASSWORD}@github.com/237summit/eks-project')
                     }   
                 }
             }
-            post {
-                success {
-                    slackSend (
-                        channel: '# finalproject',
-                        color: '#01786f',
-                        message: 'k8s Deploy success'
-                    )
-                }
-                failure {
-                   slackSend (
-                        channel: '# finalproject',
-                        color: '#ce6054',
-                        message: 'k8s Deploy failure'
-                     )
-                }
-            }
+            // post {
+            //     success {
+            //         slackSend (
+            //             channel: '# finalproject',
+            //             color: '#01786f',
+            //             message: 'k8s Deploy success'
+            //         )
+            //     }
+            //     failure {
+            //        slackSend (
+            //             channel: '# finalproject',
+            //             color: '#ce6054',
+            //             message: 'k8s Deploy failure'
+            //          )
+            //     }
+            // }
         }   
     }
 }
