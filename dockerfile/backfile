@@ -1,4 +1,4 @@
 FROM openjdk:18-jdk-alpine
-ARG JAR_FILE=spring-boot/target/*.jar
+ARG JAR_FILE=application/spring-boot/target/*.jar
 COPY ${JAR_FILE}  spring.jar
 ENTRYPOINT ["java","-jar","-Dspring.profiles.active=mysql","/spring.jar"]
