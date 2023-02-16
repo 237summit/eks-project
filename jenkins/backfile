@@ -66,7 +66,7 @@ pipeline {
 
         stage('maven build') {
             steps {
-               dir(path: 'spring-boot') {
+               dir(path: 'application/spring-boot') {
                     sh 'chmod 755 mvnw'
                     sh './mvnw clean package'
                 }   
