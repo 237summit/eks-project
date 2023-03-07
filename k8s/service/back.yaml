@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: back-container
-        image: 1234567.dkr.ecr.ap-northeast-2.amazonaws.com/awesome-back:2
+        image: 1234567.dkr.ecr.ap-northeast-2.amazonaws.com/awesome-back:3
         imagePullPolicy: Always
         ports:
         - containerPort: 10001
